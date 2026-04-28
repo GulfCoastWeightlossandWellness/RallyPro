@@ -3,8 +3,10 @@
 /**
  * DeliveryExplodedCapsule — scroll-scrubbed animated capsule section.
  *
- * Section is 240vh tall (when motion is on); inner is sticky-pinned with min-height 100dvh so the
- * capsule can scrub while the user scrolls — same on mobile and desktop.
+ * Section height scales by breakpoint so scroll-scrub progress 0→1 runs over a **shorter** physical
+ * distance on phones (Motion `useScroll` — see https://motion.dev/docs/react-use-scroll).
+ * Desktop: `offset: ["start start", "end end"]`. Narrow (≤767px): `["start start", "end center"]`
+ * so the animation finishes with less scroll. Shorter section height on mobile (~168vh cap vs 235vh lg).
  * Avoid overflow:hidden on the section or sticky breaks; cap motion must not be clipped
  * (no overflow-hidden on the sticky wrapper).
  * As the user scrolls, scrollYProgress 0→1 drives:
@@ -21,7 +23,7 @@
  * All unverified numeric claims carry "· verify" microcopy (§12 compliance).
  */
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useScroll,
@@ -263,22 +265,34 @@ function Arrow() {
 export function DeliveryExplodedCapsule() {
   const sectionRef = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  /** Narrow viewports: tighter scroll offsets so 0→1 maps to a shorter scroll range (Motion docs). */
+  const [compactOffset, setCompactOffset] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setCompactOffset(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ["start start", "end end"],
+    // Mobile: end scrub when section bottom reaches viewport *center* — completes a bit sooner / less finger travel.
+    offset: compactOffset
+      ? ["start start", "end center"]
+      : ["start start", "end end"],
   });
 
-  // High stiffness + damping so the animation tracks scroll tightly (Seed-like snappiness).
+  // Snappier spring on small screens so touch-momentum scrolling doesn’t lag the capsule as much.
   const smooth = useSpring(scrollYProgress, {
-    stiffness: 300,
-    damping: 35,
+    stiffness: compactOffset ? 400 : 300,
+    damping: compactOffset ? 42 : 35,
     restDelta: 0.001,
   });
 
   // 240vh section → 140vh of sticky scroll range on desktop.
-  // All transforms play out over 90% of that range so the capsule is visibly
-  // open for most of the time the section is pinned.
+  // Shorter section heights on small viewports keep the scrub window tight (fewer px for 0→1).
   const capYMV = useTransform(smooth, [0, 0.9], [-50, -155]);
   const bodyYMV = useTransform(smooth, [0, 0.9], [6, 38]);
   // Particles fade in early, then the 3 bands spread apart as the gap widens.
@@ -297,13 +311,14 @@ export function DeliveryExplodedCapsule() {
   const particleBotY = reduce ? 16 : particleBotYMV;
   const labelOpacity = reduce ? 1 : labelOpacityMV;
 
-  const sectionHeight = reduce ? undefined : "240vh";
+  const sectionMotionClass = reduce
+    ? ""
+    : "h-[min(168vh,920px)] sm:h-[188vh] md:h-[210vh] lg:h-[235vh]";
 
   return (
     <section
       ref={sectionRef}
-      className="relative border-b border-line bg-[#1F1D1A] text-ivory"
-      style={{ height: sectionHeight }}
+      className={`relative border-b border-line bg-[#1F1D1A] text-ivory ${sectionMotionClass}`}
       aria-label="Delivery technology — how the Daily Gut System is structured"
     >
       {/* Subtle CSS grid overlay */}
@@ -325,11 +340,11 @@ export function DeliveryExplodedCapsule() {
           "relative z-[1] flex items-center",
           reduce
             ? "py-20"
-            : "sticky top-0 min-h-[100dvh] overflow-visible py-8 sm:py-10 lg:py-0",
+            : "sticky top-0 min-h-[100svh] min-h-[100dvh] overflow-visible py-6 sm:py-8 lg:min-h-0 lg:py-0",
         ].join(" ")}
       >
         <Container className="w-full">
-          <div className="grid gap-14 lg:grid-cols-2 lg:items-center lg:gap-20">
+          <div className="grid gap-8 sm:gap-10 lg:grid-cols-2 lg:items-center lg:gap-20">
 
             {/* ── Left: copy + stat cards ─────────────────────────────── */}
             <div>
