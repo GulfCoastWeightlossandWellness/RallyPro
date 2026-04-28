@@ -3,10 +3,11 @@
 /**
  * DeliveryExplodedCapsule — scroll-scrubbed animated capsule section.
  *
- * Section height scales by breakpoint so scroll-scrub progress 0→1 runs over a **shorter** physical
- * distance on phones (Motion `useScroll` — see https://motion.dev/docs/react-use-scroll).
- * Desktop: `offset: ["start start", "end end"]`. Narrow (≤767px): `["start start", "end 38%"]`
- * so the animation finishes with less scroll. Shorter section height on mobile (~168vh cap vs 235vh lg).
+ * Section height (vh + px cap) sets how tall the dark grid backdrop + scroll runway is; breakpoints
+ * ramp from ~200vh / 1080px max on small viewports up to ~272vh on large (`useScroll` —
+ * https://motion.dev/docs/react-use-scroll).
+ * Desktop: `offset: ["start start", "end end"]`. Narrow (≤767px): `["start start", "end 38%"]` so
+ * the scrub reaches 1 a bit earlier relative to viewport while the section stays long enough to read.
  * Avoid overflow:hidden on the section or sticky breaks; cap motion must not be clipped
  * (no overflow-hidden on the sticky wrapper).
  * As the user scrolls, scrollYProgress 0→1 drives:
@@ -292,8 +293,8 @@ export function DeliveryExplodedCapsule() {
     restDelta: 0.001,
   });
 
-  // 240vh section → 140vh of sticky scroll range on desktop.
-  // Shorter section heights on small viewports keep the scrub window tight (fewer px for 0→1).
+  // Tall section → long sticky scroll range; grid backdrop fills the section (`absolute inset-0`).
+  // Taller vh on lg than base keeps the pill + labels readable before the next section.
   const capYMV = useTransform(smooth, [0, 0.9], [-50, -155]);
   const bodyYMV = useTransform(smooth, [0, 0.9], [6, 38]);
   // Particles fade in early, then the 3 bands spread apart as the gap widens.
@@ -314,7 +315,7 @@ export function DeliveryExplodedCapsule() {
 
   const sectionMotionClass = reduce
     ? ""
-    : "h-[min(168vh,920px)] sm:h-[188vh] md:h-[210vh] lg:h-[235vh]";
+    : "h-[min(200vh,1080px)] sm:h-[218vh] md:h-[242vh] lg:h-[272vh]";
 
   return (
     <section
