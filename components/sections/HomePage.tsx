@@ -142,7 +142,7 @@ export function HomePage() {
 
       <DeliveryExplodedCapsule />
 
-      <section className="border-b border-line py-20">
+      <section className="relative z-10 border-b border-line bg-paper py-20">
         <Container className="grid gap-10 lg:grid-cols-2 lg:items-center">
           <Reveal>
             <div>

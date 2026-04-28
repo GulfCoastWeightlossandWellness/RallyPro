@@ -5,7 +5,7 @@
  *
  * Section height scales by breakpoint so scroll-scrub progress 0→1 runs over a **shorter** physical
  * distance on phones (Motion `useScroll` — see https://motion.dev/docs/react-use-scroll).
- * Desktop: `offset: ["start start", "end end"]`. Narrow (≤767px): `["start start", "end center"]`
+ * Desktop: `offset: ["start start", "end end"]`. Narrow (≤767px): `["start start", "end 38%"]`
  * so the animation finishes with less scroll. Shorter section height on mobile (~168vh cap vs 235vh lg).
  * Avoid overflow:hidden on the section or sticky breaks; cap motion must not be clipped
  * (no overflow-hidden on the sticky wrapper).
@@ -278,9 +278,9 @@ export function DeliveryExplodedCapsule() {
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    // Mobile: end scrub when section bottom reaches viewport *center* — completes a bit sooner / less finger travel.
+    // Mobile: end scrub when section bottom meets ~38% viewport — earlier than center, before routine section handoff.
     offset: compactOffset
-      ? ["start start", "end center"]
+      ? ["start start", "end 38%"]
       : ["start start", "end end"],
   });
 
