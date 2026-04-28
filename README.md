@@ -43,9 +43,23 @@ Scope needed: `unauthenticated_read_product_listings`.
 
 **Revalidation:** Product data is cached for 300 seconds (5 minutes). Change `next: { revalidate: 300 }` in `lib/shopify/storefront.ts` to adjust.
 
-**Cart:** Currently uses in-memory React context (session only). Wire Shopify Cart API or Hydrogen cart hooks when checkout URL is finalized — the `useCart` hook in `lib/cart.tsx` is the integration point.
+**Cart:** In-memory React context (`lib/cart.tsx`) for this site only — lines are **not** synced to the Armenian store.
 
-**Checkout:** The `/checkout` route documents intent only. Production should redirect to the Shopify-hosted checkout URL from the cart payload.
+**Checkout:** “Proceed to checkout” and `/checkout` open a **Radix Dialog** that links to the official **Rally Sunroot** storefront (Ucraft + **Ecwid**, store id `95375072` — not Shopify). Default cart URL:
+
+`https://www.rallysunroot.am/ecommerce/rally-sunroot-c159891260#!/~/cart`
+
+Override if the store URL changes:
+
+```bash
+# Optional — full shop home
+NEXT_PUBLIC_EXTERNAL_STORE_URL=https://www.rallysunroot.am/ecommerce/rally-sunroot-c159891260
+
+# Optional — cart / checkout entry (hash route or future platform)
+NEXT_PUBLIC_EXTERNAL_STORE_CHECKOUT_URL=https://www.rallysunroot.am/ecommerce/rally-sunroot-c159891260#!/~/cart
+```
+
+The live Armenian site loads Ecwid via `https://app.shopsettings.com/script.js?95375072`. A future U.S. **Shopify** checkout can reuse the same dialog pattern by pointing these env vars at your `myshopify.com` cart or checkout URL.
 
 ---
 

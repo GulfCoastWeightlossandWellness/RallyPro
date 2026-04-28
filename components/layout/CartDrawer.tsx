@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Link from "next/link";
 import { useCart, type CartInterval } from "@/lib/cart";
+import { useExternalCheckout } from "@/lib/external-checkout";
 
 function CloseIcon() {
   return (
@@ -42,6 +43,7 @@ function QtyButton({
 export function CartDrawer() {
   const { items, drawerOpen, closeDrawer, removeItem, updateQty, total, count } =
     useCart();
+  const { openExternalCheckout } = useExternalCheckout();
 
   const hasSubscribe = items.some((i) => i.interval === "subscribe");
   const hasOneTime = items.some((i) => i.interval === "one-time");
@@ -177,16 +179,19 @@ export function CartDrawer() {
               {subtotalHint && (
                 <p className="mb-4 text-[10px] leading-snug text-mineral">{subtotalHint}</p>
               )}
-              <Dialog.Close asChild>
-                <Link
-                  href="/checkout"
-                  className="block w-full rounded-pill bg-charcoal py-3 text-center text-sm font-semibold text-ivory transition-colors hover:bg-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
-                >
-                  Proceed to Checkout
-                </Link>
-              </Dialog.Close>
+              <button
+                type="button"
+                onClick={() => {
+                  openExternalCheckout();
+                  closeDrawer();
+                }}
+                className="block w-full rounded-pill bg-charcoal py-3 text-center text-sm font-semibold text-ivory transition-colors hover:bg-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
+              >
+                Proceed to Checkout
+              </button>
               <p className="mt-3 text-center text-[10px] text-mineral">
-                Production checkout routes to Shopify hosted checkout.
+                Opens the official Rally Sunroot store (Ecwid) in a secure new tab — see dialog for
+                details.
               </p>
             </div>
           )}
