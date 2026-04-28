@@ -17,7 +17,8 @@
  *   • Leader-line labels fade in after 40% progress
  *
  * Mobile: same scroll-scrub + sticky pin as desktop; single column layout with a slightly
- * smaller SVG frame. prefers-reduced-motion: static fully-exploded diagram, auto section height.
+ * smaller SVG frame. Sticky `top-16` matches site Header nav height (`h-16`) so content does not
+ * slide under the sticky header. prefers-reduced-motion: static fully-exploded diagram, auto section height.
  *
  * No Seed trademarks or competitor copy. Rally Pro naming throughout.
  * All unverified numeric claims carry "· verify" microcopy (§12 compliance).
@@ -337,10 +338,10 @@ export function DeliveryExplodedCapsule() {
       {/* ── Content inner ─────────────────────────────────────────────────── */}
       <div
         className={[
-          "relative z-[1] flex items-center",
+          "z-[1] flex items-center",
           reduce
-            ? "py-20"
-            : "sticky top-0 min-h-[100svh] min-h-[100dvh] overflow-visible py-6 sm:py-8 lg:min-h-0 lg:py-0",
+            ? "relative py-20"
+            : "sticky top-16 min-h-[100svh] min-h-[100dvh] overflow-visible py-6 sm:py-8 lg:min-h-0 lg:py-0",
         ].join(" ")}
       >
         <Container className="w-full">
