@@ -3,7 +3,8 @@
 /**
  * DeliveryExplodedCapsule — scroll-scrubbed animated capsule section.
  *
- * Desktop: section is 240vh tall; inner is sticky-pinned for ~140vh of scroll range.
+ * Section is 240vh tall (when motion is on); inner is sticky-pinned with min-height 100dvh so the
+ * capsule can scrub while the user scrolls — same on mobile and desktop.
  * Avoid overflow:hidden on the section or sticky breaks; cap motion must not be clipped
  * (no overflow-hidden on the sticky wrapper).
  * As the user scrolls, scrollYProgress 0→1 drives:
@@ -13,8 +14,8 @@
  *   • Top particles float upward, mid particles barely drift, bottom particles sink
  *   • Leader-line labels fade in after 40% progress
  *
- * Mobile: section is auto height; static mid-exploded diagram shown below text.
- * prefers-reduced-motion: no transforms; static fully-exploded diagram shown.
+ * Mobile: same scroll-scrub + sticky pin as desktop; single column layout with a slightly
+ * smaller SVG frame. prefers-reduced-motion: static fully-exploded diagram, auto section height.
  *
  * No Seed trademarks or competitor copy. Rally Pro naming throughout.
  * All unverified numeric claims carry "· verify" microcopy (§12 compliance).
@@ -324,7 +325,7 @@ export function DeliveryExplodedCapsule() {
           "relative z-[1] flex items-center",
           reduce
             ? "py-20"
-            : "py-20 lg:sticky lg:top-0 lg:min-h-screen lg:overflow-visible lg:py-0",
+            : "sticky top-0 min-h-[100dvh] overflow-visible py-8 sm:py-10 lg:py-0",
         ].join(" ")}
       >
         <Container className="w-full">
@@ -370,13 +371,12 @@ export function DeliveryExplodedCapsule() {
               <FdaDisclaimer className="mt-8 max-w-lg text-ivory/40" />
             </div>
 
-            {/* ── Right: animated capsule — desktop only ──────────────── */}
+            {/* ── Capsule — scroll-scrubbed (all breakpoints) ───────────── */}
             <div
-              className="hidden lg:flex lg:items-center lg:justify-center"
+              className="flex items-center justify-center"
               style={{ perspective: "900px" }}
-              aria-hidden
             >
-              <div className="relative h-[500px] w-[360px]">
+              <div className="relative mx-auto h-[360px] w-[258px] sm:h-[420px] sm:w-[302px] lg:h-[500px] lg:w-[360px]">
                 <CapsuleSVG
                   capY={capY}
                   bodyY={bodyY}
@@ -387,21 +387,6 @@ export function DeliveryExplodedCapsule() {
                   labelOpacity={labelOpacity}
                 />
               </div>
-            </div>
-          </div>
-
-          {/* ── Mobile diagram — static, below text ─────────────────────── */}
-          <div className="mt-12 flex justify-center lg:hidden" aria-hidden>
-            <div className="h-[340px] w-[260px]">
-              <CapsuleSVG
-                capY={-100}
-                bodyY={22}
-                particleOpacity={1}
-                particleTopY={-12}
-                particleMidY={-3}
-                particleBotY={10}
-                labelOpacity={0.9}
-              />
             </div>
           </div>
         </Container>
