@@ -1,7 +1,8 @@
 "use client";
 
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ButtonLink } from "@/components/ui/Button";
 import { BrandMark } from "@/components/layout/BrandMark";
 import { useCart } from "@/lib/cart";
@@ -36,14 +37,16 @@ function MenuIcon({ open }: { open: boolean }) {
   );
 }
 
+/** Desktop Shop menu item — shared styles for Radix DropdownMenu.Item + Next Link */
+const shopItemLinkClass =
+  "block cursor-pointer rounded-sm px-3 py-2.5 text-sm text-charcoal outline-none select-none data-[highlighted]:bg-paper";
+
+const shopItemSublines = "text-[11px] text-mineral";
+
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
-  const [shopOpen, setShopOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { openDrawer, count } = useCart();
-
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -52,69 +55,7 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const openShop = useCallback(() => setShopOpen(true), []);
-
-  const closeShop = useCallback(() => {
-    setShopOpen(false);
-  }, []);
-
-  const closeShopAndReturnFocus = useCallback(() => {
-    setShopOpen(false);
-    triggerRef.current?.focus();
-  }, []);
-
-  // Close dropdown when focus leaves it
-  const handleDropdownBlur = useCallback(
-    (e: React.FocusEvent) => {
-      if (!dropdownRef.current?.contains(e.relatedTarget as Node)) {
-        closeShop();
-      }
-    },
-    [closeShop],
-  );
-
-  const handleTriggerKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
-        e.preventDefault();
-        openShop();
-        // Focus first item after open
-        requestAnimationFrame(() => {
-          const first = dropdownRef.current?.querySelector<HTMLElement>("[role='menuitem']");
-          first?.focus();
-        });
-      }
-      if (e.key === "Escape") {
-        closeShopAndReturnFocus();
-      }
-    },
-    [openShop, closeShopAndReturnFocus],
-  );
-
-  const handleDropdownKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Escape") {
-        e.preventDefault();
-        closeShopAndReturnFocus();
-        return;
-      }
-      const items = Array.from(
-        dropdownRef.current?.querySelectorAll<HTMLElement>("[role='menuitem']") ?? [],
-      );
-      const focused = document.activeElement;
-      const idx = items.indexOf(focused as HTMLElement);
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        items[(idx + 1) % items.length]?.focus();
-      }
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        items[(idx - 1 + items.length) % items.length]?.focus();
-      }
-    },
-    [closeShopAndReturnFocus],
-  );
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   const dropdown = getAllProducts().slice(0, 6);
 
@@ -130,76 +71,58 @@ export function Header() {
       >
         <BrandMark variant="header" />
 
-        {/* Desktop nav */}
+        {/* Desktop nav — Shop uses Radix DropdownMenu (click-to-toggle, no hover-chase) */}
         <div className="hidden items-center gap-9 md:flex">
-          {/* Shop dropdown */}
-          <div
-            className="relative"
-            onMouseEnter={openShop}
-            onMouseLeave={closeShop}
-          >
-            <button
-              ref={triggerRef}
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger
               type="button"
               id="shop-menu-trigger"
-              aria-expanded={shopOpen}
-              aria-haspopup="menu"
-              aria-controls="shop-dropdown"
-              onKeyDown={handleTriggerKeyDown}
-              onClick={() => (shopOpen ? closeShopAndReturnFocus() : openShop())}
-              className="flex items-center gap-1 text-sm font-medium text-charcoal transition-colors hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep focus-visible:ring-offset-1"
+              className="group flex items-center gap-1 rounded-sm text-sm font-medium text-charcoal transition-colors hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep focus-visible:ring-offset-1 data-[state=open]:text-sage-deep"
             >
               Shop
               <span
                 aria-hidden
-                className={`text-[10px] transition-transform duration-150 ${shopOpen ? "rotate-180" : ""}`}
+                className="text-[10px] transition-transform duration-150 group-data-[state=open]:rotate-180"
               >
                 ▾
               </span>
-            </button>
+            </DropdownMenu.Trigger>
 
-            {shopOpen && (
-              <div
-                ref={dropdownRef}
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
                 id="shop-dropdown"
-                role="menu"
+                sideOffset={8}
+                align="start"
+                collisionPadding={16}
+                className="z-[200] w-72 rounded-md border border-line bg-ivory py-2 shadow-[var(--shadow-float)] outline-none"
                 aria-labelledby="shop-menu-trigger"
-                onBlur={handleDropdownBlur}
-                onKeyDown={handleDropdownKeyDown}
-                className="absolute left-0 top-full z-[100] mt-2 w-72 rounded-md border border-line bg-ivory py-2 shadow-[var(--shadow-float)]"
               >
                 {dropdown.map((p) => (
-                  <Link
-                    key={p.slug}
-                    href={`/products/${p.slug}`}
-                    role="menuitem"
-                    tabIndex={0}
-                    onClick={closeShop}
-                    className="block px-3 py-2.5 text-sm transition-colors hover:bg-paper focus-visible:bg-paper focus-visible:outline-none"
-                  >
-                    <div className="font-semibold text-charcoal">{p.name}</div>
-                    <div className="text-[11px] text-mineral">{p.tagline}</div>
-                  </Link>
+                  <DropdownMenu.Item key={p.slug} asChild>
+                    <Link href={`/products/${p.slug}`} className={shopItemLinkClass}>
+                      <div className="font-semibold text-charcoal">{p.name}</div>
+                      <div className={shopItemSublines}>{p.tagline}</div>
+                    </Link>
+                  </DropdownMenu.Item>
                 ))}
-                <div role="separator" className="my-1 border-t border-line" />
-                <Link
-                  href="/products/daily-gut-system"
-                  role="menuitem"
-                  tabIndex={0}
-                  onClick={closeShop}
-                  className="block px-3 py-2 text-xs font-semibold text-sage-deep transition-colors hover:bg-paper focus-visible:bg-paper focus-visible:outline-none"
-                >
-                  View flagship →
-                </Link>
-              </div>
-            )}
-          </div>
+                <DropdownMenu.Separator className="my-1 h-px bg-line" />
+                <DropdownMenu.Item asChild>
+                  <Link
+                    href="/products/daily-gut-system"
+                    className={`${shopItemLinkClass} py-2 text-xs font-semibold text-sage-deep data-[highlighted]:text-sage-deep`}
+                  >
+                    View flagship →
+                  </Link>
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
 
           {NAV_LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className="text-sm font-medium text-charcoal transition-colors hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep focus-visible:ring-offset-1"
+              className="rounded-sm text-sm font-medium text-charcoal transition-colors hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep focus-visible:ring-offset-1"
             >
               {l.label}
             </Link>
@@ -252,8 +175,8 @@ export function Header() {
               <Link
                 key={p.slug}
                 href={`/products/${p.slug}`}
-                onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-charcoal hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
+                onClick={closeMobile}
+                className="block rounded-sm py-2.5 text-sm font-medium text-charcoal hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
               >
                 {p.name}
               </Link>
@@ -263,8 +186,8 @@ export function Header() {
               <Link
                 key={l.href}
                 href={l.href}
-                onClick={() => setMobileOpen(false)}
-                className="block py-2 text-sm font-medium text-charcoal hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
+                onClick={closeMobile}
+                className="block rounded-sm py-2.5 text-sm font-medium text-charcoal hover:text-sage-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-deep"
               >
                 {l.label}
               </Link>

@@ -4,25 +4,27 @@ import Link from "next/link";
 const LOGO = "/images/brand/rally-sunroot-logo.webp";
 
 type Props = {
-  /** Header: dark text beside logo. Footer: ivory on dark. */
+  /** Header: light bar. Footer: ivory on dark with subtle chip. */
   variant: "header" | "footer";
-  /** Show “Rally Pro” beside the Rally Sunroot logotype */
-  showWordmark?: boolean;
 };
 
-export function BrandMark({ variant, showWordmark = true }: Props) {
+/**
+ * Rally Sunroot logotype only (no separate “Rally Pro” wordmark).
+ * `aria-label` names the site for screen readers.
+ */
+export function BrandMark({ variant }: Props) {
   const isHeader = variant === "header";
   return (
     <Link
       href="/"
-      className={`flex items-center gap-3 ${isHeader ? "" : "items-start"}`}
+      className={`inline-flex shrink-0 ${isHeader ? "items-center" : "items-start"}`}
       aria-label="Rally Pro home"
     >
       <span
         className={
           isHeader
-            ? "inline-flex shrink-0"
-            : "inline-flex shrink-0 rounded-md bg-white/12 p-2 ring-1 ring-white/10"
+            ? "inline-flex"
+            : "inline-flex rounded-md bg-white/12 p-2 ring-1 ring-white/10"
         }
       >
         <Image
@@ -31,16 +33,9 @@ export function BrandMark({ variant, showWordmark = true }: Props) {
           width={938}
           height={414}
           priority={isHeader}
-          className={`w-auto ${isHeader ? "h-7 md:h-8" : "h-6 md:h-7"}`}
+          className={`w-auto ${isHeader ? "h-9 md:h-11" : "h-8 md:h-10"}`}
         />
       </span>
-      {showWordmark ? (
-        <span
-          className={`font-display text-lg tracking-wide ${isHeader ? "text-charcoal" : "text-ivory"} leading-tight`}
-        >
-          Rally Pro
-        </span>
-      ) : null}
     </Link>
   );
 }
