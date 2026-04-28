@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Rally Pro — Marketing Site
+
+Next.js 16 App Router · React 19 · Tailwind v4 · TypeScript
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Commerce
 
-## Learn More
+### Shopify Storefront API
 
-To learn more about Next.js, take a look at the following resources:
+The site uses a two-layer data strategy:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Condition | Data source |
+|---|---|
+| Env vars present | Live Shopify Storefront GraphQL (5-min `revalidate`) |
+| Env vars absent | Static catalog at `lib/content/products.ts` |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Set the following in `.env.local` (never commit this file):
 
-## Deploy on Vercel
+```bash
+# Required — your Shopify store domain (no https://)
+NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN=your-store.myshopify.com
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Required — public Storefront access token (read-only, safe to expose to browser)
+NEXT_PUBLIC_SHOPIFY_STOREFRONT_TOKEN=your_storefront_access_token
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Optional — defaults to 2024-10
+NEXT_PUBLIC_SHOPIFY_API_VERSION=2024-10
+```
+
+**How to get a Storefront token:**  
+Shopify Admin → Apps → Develop apps → Create app → Storefront API → Generate token.  
+Scope needed: `unauthenticated_read_product_listings`.
+
+**Revalidation:** Product data is cached for 300 seconds (5 minutes). Change `next: { revalidate: 300 }` in `lib/shopify/storefront.ts` to adjust.
+
+**Cart:** Currently uses in-memory React context (session only). Wire Shopify Cart API or Hydrogen cart hooks when checkout URL is finalized — the `useCart` hook in `lib/cart.tsx` is the integration point.
+
+**Checkout:** The `/checkout` route documents intent only. Production should redirect to the Shopify-hosted checkout URL from the cart payload.
+
+---
+
+## Bundle Analysis (Phase 8)
+
+```bash
+npm run analyze
+```
+
+This runs `next build` with `ANALYZE=true`, which opens bundle reports in your browser via `@next/bundle-analyzer`. Use it to audit client-side chunk sizes before shipping paid traffic.
+
+---
+
+## Accessibility (Phase 9)
+
+ESLint is configured with `eslint-plugin-jsx-a11y` (recommended ruleset). Run:
+
+```bash
+npm run lint
+```
+
+For runtime auditing during development, install the [axe DevTools](https://www.deque.com/axe/devtools/) browser extension — it checks rendered pages against WCAG 2.2 AA without any build changes.
+
+---
+
+## View Transitions (Phase 10) — Skipped
+
+Next.js 16 includes `experimental.viewTransition` support, but the API is **unstable** in this version and the React 19 `<ViewTransition>` component is still experimental. Adding it now risks rendering bugs on navigation.
+
+**Decision:** Skipped. Re-evaluate when Next.js View Transitions reach stable API status. When ready, enable via:
+
+```ts
+// next.config.ts
+const nextConfig: NextConfig = {
+  experimental: { viewTransition: true },
+};
+```
+
+Then add a global CSS override for reduced-motion users:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+```
+
+---
+
+## How to test key features
+
+### Cart drawer
+1. Visit any PDP (e.g. `/products/daily-gut-system`)
+2. Select "Subscribe & save" or "One-time", click "Add to cart"
+3. Drawer slides in from right — Escape or the × closes it, focus returns to trigger
+4. Click "Cart" in the header to reopen
+
+### Shopify fallback
+Without env vars set, pages render using `lib/content/products.ts` static data. The Shopify config block on the PDP reports the active status.
+
+### SystemStrip (sticky)
+Scroll ~50% of the viewport height on the homepage — the strip slides up from the bottom. Dismiss via × button. Respects `prefers-reduced-motion` (instant show/hide via `globals.css` transition override).
+
+### Shop dropdown keyboard nav
+Focus "Shop" in the header → press Enter or ↓ to open → Arrow keys to navigate → Escape closes and returns focus to the trigger.
+
+### Bundle analyzer
+```bash
+npm run analyze
+# Opens client + server bundle reports in browser
+```
